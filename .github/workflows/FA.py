@@ -141,12 +141,12 @@ class Divar_old_detector:
             self.payload_update(response)
             self.tokens_set_update(response)
         except : 
-            print(response.status_code)
+            print(f"request failed due to {response.status_code}")
 
     def secondary_requests(self):
         cnt = 0 
         while self.secondary_payload["has_next_page"]:
-            
+    
             cnt += 1 
             if cnt % 100 == 0 :
                 sleep(uniform(0.3,0.5))
@@ -159,12 +159,98 @@ class Divar_old_detector:
                 self.tokens_set_update(response)
             
             except :
-                print(response.status_code)
+                print(f"request failed due to {response.status_code}")
+
     
     def log(self):
         print(f"number of collected ids : {len(self.tokens_set)}")
         print(f"sample id being collected : {max(self.tokens_set)}")
 
         
+class Divar_new_detector:
+
+    def __init__(self,min_sleep,max_sleep,num_iteration):
+        
+        self.min_sleep = min_sleep 
+
+        self.max_sleep = max_sleep 
+
+        self.token_url = "https://api.divar.ir/v8/posts-v2/web/"
+
+        self.url = "https://api.divar.ir/v8/postlist/w/search"
+
+        self.headers = { 
+            "accept" : "application/json , text/plain , */*" , 
+            "accept-encoding" : "gzip , deflate , br , zstd" , 
+            "accept-language" : "en-US , en;q=0.9 , fa;q=0.8 , de;q=0.7" ,
+            "content_type" : "application/json" ,
+            "origin" : "https://divar.ir" ,  
+            "referer" : "https://divar.ir/" ,
+            "user-agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" ,
+            "x-render-type" : "CSR" , 
+            "x-screen-size" : "526x812" , 
+            "x-standard-divar-error" : "true"    
+            }
+        self.payload = {
+            "city_ids" : ["1"]  , 
+            "source_view" : "CATEGORY" , 
+            "disable_recommendation" : False , 
+            "map_state" : {
+                "camera_info" : {
+                    "bbox" : {}    
+                }
+            } , 
+            "search_data" : {
+                "form_data" : {
+                    "data" : {
+                        "category" : {
+                            "str" : {
+                                "value" : "real-estate"
+                            }
+                        }
+                    }
+                } , 
+                "server_payload" : {
+                    "@type" : "type.googleapis.com/widgets.SearchData.ServerPayload" , 
+                    "additional_form_data" : {
+                        "data" : {
+                            "sort" : {
+                                "str" : {
+                                    "value" : "sort_date"
+                                }
+                            }
+                        }
+                    }
+                }
+            }  
+        }
+        self.request(num_iteration)
+    
+    def new_token_detection(self,response):
+        for widget in response["list_widgets"]:
+            if widget["widget_type"] == "POST_ROW":
+                try :
+                    token = widget["data"]["token"]
+                    if  token not in divar_old_detector.tokens_set:
+                        print(f"new token is found : {token}")
+                        divar_old_detector.tokens_set.add(token)
+                
+                except Exception as e:
+                    print(f"examination of tokens failed due to {e} !")
+
+    def request(self,num_iteration):
+        
+        cnt = 0 
+        while cnt < num_iteration :
+            response = requests.post(url = self.url , headers = self.headers , json = self.payload)
+            try : 
+                response = response.json()
+                self.new_token_detection(response)
+                sleep(uniform(self.min_sleep,self.max_sleep))
+            except :
+                print(f"request failed due to {response.status_code}")
+
+            cnt += 1  
 
 divar_old_detector = Divar_old_detector()
+divar_new_detector = Divar_new_detector(0.3,0.5,10)
