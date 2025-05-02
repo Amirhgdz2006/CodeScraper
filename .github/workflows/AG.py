@@ -192,7 +192,6 @@ def house_parking(response):
 
     return h_parking
 
-
 # -------------------- h_storage_room
 def house_storage_room(response):
     h_storage_room = ''
