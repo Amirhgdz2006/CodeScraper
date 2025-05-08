@@ -614,4 +614,3 @@ for website in [divar_old_detector,melkradar_old_detector]:
         json.dump(lst_data, file, ensure_ascii=False, indent=4)
 
 
-
