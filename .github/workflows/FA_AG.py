@@ -613,4 +613,3 @@ for website in [divar_old_detector,melkradar_old_detector]:
     with open(f'real_estate_info_{web_site[[divar_old_detector,melkradar_old_detector].index(website)]}.json', 'w', encoding='utf-8') as file:
         json.dump(lst_data, file, ensure_ascii=False, indent=4)
 
-
