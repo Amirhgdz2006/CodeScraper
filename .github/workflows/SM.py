@@ -7,54 +7,82 @@ import json
 def convert_persian_digits(text):
     persian_digits = '۰۱۲۳۴۵۶۷۸۹'
     english_digits = '0123456789'
-    translation_table = str.maketrans(persian_digits, english_digits)
-    return text.translate(translation_table)
+    return text.translate(str.maketrans(persian_digits, english_digits))
 
-# Remove stray/unmatched parentheses
+# Remove unmatched parentheses
 def remove_unmatched_parentheses(text):
-    # Remove lone "(" not followed by closing ")"
     text = re.sub(r'\(([^)]*$)', r'\1', text)
-    # Remove lone ")" not preceded by "("
     text = re.sub(r'(^[^(]*)\)', r'\1', text)
     return text
 
-# Main cleaner function
+# Clean title text
 def clean_title(title):
     if pd.isna(title):
         return np.nan
-
     title = str(title).strip()
-
-    # Convert Persian digits to English
     title = convert_persian_digits(title)
-
-    # Replace ZWNJ and non-breaking space with regular space
     title = re.sub(r'[\u200c\u00a0]', ' ', title)
-
-    # Add space before and after numbers
     title = re.sub(r'(\d+)', r' \1 ', title)
-
-    # Ensure space before and after "/"
     title = re.sub(r'\s*/\s*', ' / ', title)
-
-    # Remove any unwanted characters except parentheses, slashes, dash, comma
     title = re.sub(r'[^\w\s/،()\-]', '', title)
-
-    # Remove unmatched parentheses
     title = remove_unmatched_parentheses(title)
-
-    # Remove multiple spaces
     title = re.sub(r'\s+', ' ', title)
-
     return title.strip()
 
-# Read titles from file
+# Extract area from title if needed
+def extract_area_from_title(title):
+    if pd.isna(title):
+        return None
+    title = convert_persian_digits(title)
+    match = re.search(r'(\d{1,5}(?:,\d{3})?)\s*متر(?:ی)?\b', title)
+    if match:
+        try:
+            return int(match.group(1).replace(',', ''))
+        except ValueError:
+            return None
+    return None
+
+# Read input files
 with open('title.txt', 'r', encoding='utf-8') as f:
-    titles = [line.strip() for line in f if line.strip()]
+    raw_titles = [line.strip() for line in f if line.strip()]
 
-# Clean titles
-cleaned_titles = [{'title': clean_title(title)} for title in titles]
+with open('area.txt', 'r', encoding='utf-8') as f:
+    raw_areas = [line.strip() for line in f]
 
-# Save to JSON
+with open('built_year.txt', 'r', encoding='utf-8') as f:
+    raw_years = [line.strip() for line in f]
+
+# Validate row count consistency
+if not (len(raw_titles) == len(raw_areas) == len(raw_years)):
+    raise ValueError("❌ Line count mismatch between files!")
+
+# Build output data
+data = []
+for raw_title, raw_area, raw_year in zip(raw_titles, raw_areas, raw_years):
+    cleaned_title = clean_title(raw_title)
+
+    # Area
+    area_str = convert_persian_digits(raw_area.strip())
+    try:
+        area = int(area_str.replace(',', '')) if area_str else None
+    except ValueError:
+        area = None
+    if area is None:
+        area = extract_area_from_title(cleaned_title)
+
+    # Built year
+    year_str = convert_persian_digits(raw_year.strip())
+    try:
+        built_year = int(year_str) if year_str else None
+    except ValueError:
+        built_year = None
+
+    data.append({
+        'title': cleaned_title,
+        'area': area,
+        'built_year': built_year
+    })
+
+# Save result
 with open('cleaned_titles.json', 'w', encoding='utf-8') as f:
-    json.dump(cleaned_titles, f, ensure_ascii=False, indent=2)
+    json.dump(data, f, ensure_ascii=False, indent=2)
