@@ -208,6 +208,7 @@ def divar():
     for website in [divar_old_detector]:
         lst_data = []
         lst_token = website.tokens_set
+        count = 0
         for token in lst_token:
             try:
                 url = f"https://api.divar.ir/v8/posts-v2/web/{token}"
@@ -464,7 +465,9 @@ def divar():
                     data = house_for_sale(response)
                 # ------------------------
                 lst_data.append(data)
-                sleep(0.7)
+                count += 1
+                if count % 5 == 0:
+                    sleep(2)
 
             except Exception:
                 pass
@@ -617,6 +620,7 @@ def melkradar():
     for website in [melkradar_old_detector]:
         lst_data = []
         lst_token = website.tokens_set
+        count = 0
         for token in lst_token:
             try:
                 url = f"https://api.divar.ir/v8/posts-v2/web/{token}"
@@ -873,7 +877,9 @@ def melkradar():
 
                 # ------------------------
                 lst_data.append(data)
-                sleep(0.7)
+                count += 1
+                if count % 5 == 0:
+                    sleep(2)
 
             except Exception:
                 pass
