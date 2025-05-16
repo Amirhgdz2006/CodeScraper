@@ -45,3 +45,11 @@ CREATE TABLE divar (
     INDEX idx_area (area),
     INDEX idx_location (location(255))
 );
+
+ALTER TABLE melkradar
+ADD sale_price BIGINT,
+ADD price_per_m2 BIGINT;
+
+ALTER TABLE divar
+ADD sale_price BIGINT,
+ADD price_per_m2 BIGINT;
