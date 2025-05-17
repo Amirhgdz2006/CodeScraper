@@ -1316,5 +1316,3 @@ if __name__ == "__main__":
 
         # every 3 min this code will run automatically
         time.sleep(180)
-
-
